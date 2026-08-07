@@ -5,7 +5,7 @@ import {
   Ticket, Users, Megaphone, Brain, TrendingUp, AlertTriangle,
   CheckCircle, Clock, Map, Bell
 } from 'lucide-react';
-import { ticketService, campaignService, notificationService, reportService } from '../../services';
+import { ticketService, campaignService, notificationService, reportService, userService, aiService, journeyService } from '../../services';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const ROLE_CONFIGS = {
@@ -38,6 +38,19 @@ const DashboardPage = () => {
           promises.push(campaignService.getCampaigns({ limit: 5 }).then(r => ({ campaigns: r.data })));
           promises.push(reportService.getCampaignReport().then(r => ({ campaignStats: r.data.data })));
         }
+        
+        // Specific Role Fetches
+        if (role === 'Admin') {
+          promises.push(userService.getUsers({ limit: 1 }).then(r => ({ users: r.data })));
+          promises.push(aiService.getRuns({ limit: 1 }).then(r => ({ aiRuns: r.data })));
+        }
+        if (role === 'Customer') {
+          // Fallback to 'me' if user.profileId isn't available
+          promises.push(journeyService.getJourneys(user?.profileId || 'me', { limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })).then(r => ({ journeys: r.data })));
+          promises.push(notificationService.getNotifications({ read: false, limit: 1 }).then(r => ({ unreadNotifs: r.data })));
+        }
+        
+        // All roles get notifications widget
         promises.push(notificationService.getNotifications({ limit: 5 }).then(r => ({ notifications: r.data })));
 
         const results = await Promise.allSettled(promises);
@@ -50,7 +63,7 @@ const DashboardPage = () => {
       }
     };
     loadData();
-  }, [role]);
+  }, [role, user]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -72,6 +85,11 @@ const DashboardPage = () => {
   
   const totalCampaigns = data.campaigns?.data?.pagination?.total || 0;
   const activeCampaignsCount = campaignStats.find(s => s._id === 'Running')?.count || 0;
+
+  const totalUsers = data.users?.data?.pagination?.total || 0;
+  const totalAiRuns = data.aiRuns?.data?.pagination?.total || 0;
+  const totalJourneys = data.journeys?.data?.pagination?.total || 0;
+  const unreadNotifsCount = data.unreadNotifs?.data?.pagination?.total || notifData.filter(n => !n.read).length;
 
   const ticketChartData = [
     { name: 'Open', value: openTicketsCount, color: '#ef4444' },
@@ -97,6 +115,11 @@ const DashboardPage = () => {
 
       {/* Stats Row */}
       <AnimatedList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {role === 'Admin' && (
+          <AnimatedListItem>
+            <StatCard title="Total Users" value={totalUsers} icon={Users} color="blue" />
+          </AnimatedListItem>
+        )}
         {['Admin', 'Service Agent', 'Sales Manager'].includes(role) && (
           <>
             <AnimatedListItem>
@@ -117,13 +140,23 @@ const DashboardPage = () => {
             </AnimatedListItem>
           </>
         )}
+        {role === 'Admin' && (
+          <AnimatedListItem>
+            <StatCard title="AI Runs" value={totalAiRuns} icon={Brain} color="purple" />
+          </AnimatedListItem>
+        )}
+        
+        {/* Customer Stats */}
         {role === 'Customer' && (
           <>
             <AnimatedListItem>
-              <StatCard title="Notifications" value={notifData.length} icon={Bell} color="blue" />
+              <StatCard title="My Journeys" value={totalJourneys} icon={Map} color="indigo" />
             </AnimatedListItem>
             <AnimatedListItem>
-              <StatCard title="Unread" value={notifData.filter(n => !n.read).length} icon={AlertTriangle} color="yellow" />
+              <StatCard title="Notifications" value={data.notifications?.data?.pagination?.total || 0} icon={Bell} color="blue" />
+            </AnimatedListItem>
+            <AnimatedListItem>
+              <StatCard title="Unread" value={unreadNotifsCount} icon={AlertTriangle} color="yellow" />
             </AnimatedListItem>
           </>
         )}
