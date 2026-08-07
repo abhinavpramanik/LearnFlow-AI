@@ -65,15 +65,15 @@ const DashboardPage = () => {
   ];
 
   return (
-    <AnimatedPage className="space-y-6">
+    <AnimatedPage className="space-y-8">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-xl bg-card border shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl bg-card border shadow-sm">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
         <div className="relative z-10 p-6 sm:p-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">
             Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, {user?.firstName}! 👋
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">Here's what's happening across your organization today.</p>
+          <p className="text-muted-foreground mt-3 text-lg">Here's what's happening across your organization today.</p>
           <div className="mt-4">
             <Badge label={role} variant="brand" />
           </div>
@@ -81,7 +81,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Row */}
-      <AnimatedList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <AnimatedList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {['Admin', 'Service Agent', 'Sales Manager'].includes(role) && (
           <>
             <AnimatedListItem>
@@ -115,7 +115,7 @@ const DashboardPage = () => {
       </AnimatedList>
 
       {/* Main Grid */}
-      <AnimatedList className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <AnimatedList className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ticket Overview Chart */}
         {['Admin', 'Service Agent', 'Sales Manager'].includes(role) && ticketData.length > 0 && (
           <AnimatedListItem className="lg:col-span-2">

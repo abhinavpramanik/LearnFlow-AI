@@ -60,13 +60,13 @@ const Sidebar = ({ collapsed, onToggle }) => {
             to={item.path}
             title={collapsed ? item.label : undefined}
             className={({ isActive }) => cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all group",
+              "flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium transition-all group",
               isActive 
                 ? "bg-primary/15 text-primary" 
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
-            <item.icon size={18} className="shrink-0" />
+            <item.icon size={20} className="shrink-0" />
             <AnimateText show={!collapsed}>
               {item.label}
             </AnimateText>

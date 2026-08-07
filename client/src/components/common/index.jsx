@@ -136,9 +136,9 @@ export const StatCard = ({ title, value, icon: Icon, trend, color = 'indigo', su
         <div className="flex items-start justify-between">
           <div>
             <p className="text-muted-foreground text-sm font-medium">{title}</p>
-            <p className="text-3xl font-bold text-foreground mt-2">{value}</p>
-            {subtitle && <p className="text-muted-foreground text-xs mt-1">{subtitle}</p>}
-            {trend && <p className={`text-xs mt-2 font-medium ${trend.positive ? 'text-emerald-500' : 'text-red-500'}`}>{trend.label}</p>}
+            <p className="text-4xl font-bold text-foreground mt-2">{value}</p>
+            {subtitle && <p className="text-muted-foreground text-xs mt-2">{subtitle}</p>}
+            {trend && <p className={`text-sm mt-2 font-medium ${trend.positive ? 'text-emerald-500' : 'text-red-500'}`}>{trend.label}</p>}
           </div>
           {Icon && (
             <div className={cn("p-3 rounded-xl", c.bg)}>
