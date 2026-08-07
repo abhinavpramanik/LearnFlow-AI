@@ -16,7 +16,7 @@ const getClient = () => {
  * Calls the Gemini API with retry logic for transient failures.
  * Returns parsed JSON from the model's response.
  */
-const callGemini = async (prompt, modelName = 'gemini-1.5-flash', maxRetries = 3) => {
+const callGemini = async (prompt, modelName = 'gemini-1.5-flash-latest', maxRetries = 3) => {
   const client = getClient();
   const model = client.getGenerativeModel({ model: modelName });
 

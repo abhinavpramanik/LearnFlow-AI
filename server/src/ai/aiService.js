@@ -19,7 +19,9 @@ const executeAI = async ({ feature, promptFn, inputData, actorId }) => {
   let status = 'success';
   let parsed;
   let latencyMs = 0;
-  let modelVersion = 'gemini-1.5-flash';
+  let promptVersion = '1.0';
+  let modelVersion = 'gemini-1.5-flash-latest';
+  let systemPrompt = '';
   let errorMessage;
 
   try {

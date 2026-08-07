@@ -5,7 +5,7 @@ import {
   Ticket, Users, Megaphone, Brain, TrendingUp, AlertTriangle,
   CheckCircle, Clock, Map, Bell
 } from 'lucide-react';
-import { ticketService, profileService, campaignService, notificationService } from '../../services';
+import { ticketService, campaignService, notificationService, reportService } from '../../services';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const ROLE_CONFIGS = {
@@ -28,11 +28,15 @@ const DashboardPage = () => {
     const loadData = async () => {
       try {
         const promises = [];
+        
+        // Fetch raw lists for recent activity widgets
         if (['Admin', 'Service Agent', 'Sales Manager'].includes(role)) {
           promises.push(ticketService.getTickets({ limit: 5 }).then(r => ({ tickets: r.data })));
+          promises.push(reportService.getTicketReport().then(r => ({ ticketStats: r.data.data })));
         }
         if (['Admin', 'Marketing Manager', 'Sales Manager'].includes(role)) {
           promises.push(campaignService.getCampaigns({ limit: 5 }).then(r => ({ campaigns: r.data })));
+          promises.push(reportService.getCampaignReport().then(r => ({ campaignStats: r.data.data })));
         }
         promises.push(notificationService.getNotifications({ limit: 5 }).then(r => ({ notifications: r.data })));
 
@@ -57,11 +61,22 @@ const DashboardPage = () => {
   const ticketData = data.tickets?.data?.data || [];
   const campaignData = data.campaigns?.data?.data || [];
   const notifData = data.notifications?.data?.data?.notifications || [];
+  
+  const ticketStats = data.ticketStats?.statusBreakdown || [];
+  const campaignStats = data.campaignStats?.statusBreakdown || [];
+
+  const totalTickets = data.tickets?.data?.pagination?.total || 0;
+  const openTicketsCount = ticketStats.find(s => s._id === 'Open')?.count || 0;
+  const inProgressTicketsCount = ticketStats.find(s => s._id === 'In Progress')?.count || 0;
+  const closedTicketsCount = ticketStats.find(s => s._id === 'Closed')?.count || 0;
+  
+  const totalCampaigns = data.campaigns?.data?.pagination?.total || 0;
+  const activeCampaignsCount = campaignStats.find(s => s._id === 'Running')?.count || 0;
 
   const ticketChartData = [
-    { name: 'Open', value: ticketData.filter(t => t.status === 'Open').length, color: '#ef4444' },
-    { name: 'In Progress', value: ticketData.filter(t => t.status === 'In Progress').length, color: '#f59e0b' },
-    { name: 'Closed', value: ticketData.filter(t => t.status === 'Closed').length, color: '#10b981' },
+    { name: 'Open', value: openTicketsCount, color: '#ef4444' },
+    { name: 'In Progress', value: inProgressTicketsCount, color: '#f59e0b' },
+    { name: 'Closed', value: closedTicketsCount, color: '#10b981' },
   ];
 
   return (
@@ -85,20 +100,20 @@ const DashboardPage = () => {
         {['Admin', 'Service Agent', 'Sales Manager'].includes(role) && (
           <>
             <AnimatedListItem>
-              <StatCard title="Total Tickets" value={data.tickets?.data?.pagination?.total || 0} icon={Ticket} color="red" />
+              <StatCard title="Total Tickets" value={totalTickets} icon={Ticket} color="red" />
             </AnimatedListItem>
             <AnimatedListItem>
-              <StatCard title="Open Tickets" value={ticketData.filter(t => t.status === 'Open').length} icon={Clock} color="yellow" />
+              <StatCard title="Open Tickets" value={openTicketsCount} icon={Clock} color="yellow" />
             </AnimatedListItem>
           </>
         )}
         {['Admin', 'Marketing Manager', 'Sales Manager'].includes(role) && (
           <>
             <AnimatedListItem>
-              <StatCard title="Campaigns" value={data.campaigns?.data?.pagination?.total || 0} icon={Megaphone} color="indigo" />
+              <StatCard title="Campaigns" value={totalCampaigns} icon={Megaphone} color="indigo" />
             </AnimatedListItem>
             <AnimatedListItem>
-              <StatCard title="Active Campaigns" value={campaignData.filter(c => c.status === 'Running').length} icon={TrendingUp} color="green" />
+              <StatCard title="Active Campaigns" value={activeCampaignsCount} icon={TrendingUp} color="green" />
             </AnimatedListItem>
           </>
         )}
@@ -117,7 +132,7 @@ const DashboardPage = () => {
       {/* Main Grid */}
       <AnimatedList className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ticket Overview Chart */}
-        {['Admin', 'Service Agent', 'Sales Manager'].includes(role) && ticketData.length > 0 && (
+        {['Admin', 'Service Agent', 'Sales Manager'].includes(role) && totalTickets > 0 && (
           <AnimatedListItem className="lg:col-span-2">
             <Card>
               <h3 className="text-lg font-semibold text-foreground mb-6 tracking-tight">Ticket Status Overview</h3>
@@ -185,7 +200,7 @@ const DashboardPage = () => {
         )}
 
         {/* Campaign Status */}
-        {['Admin', 'Marketing Manager', 'Sales Manager'].includes(role) && campaignData.length > 0 && (
+        {['Admin', 'Marketing Manager', 'Sales Manager'].includes(role) && totalCampaigns > 0 && (
           <AnimatedListItem>
             <Card>
               <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2 tracking-tight">
@@ -194,11 +209,11 @@ const DashboardPage = () => {
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={[
-                    { name: 'Draft', value: campaignData.filter(c => c.status === 'Draft').length + 1 },
-                    { name: 'Scheduled', value: campaignData.filter(c => c.status === 'Scheduled').length + 1 },
-                    { name: 'Running', value: campaignData.filter(c => c.status === 'Running').length + 1 },
-                    { name: 'Completed', value: campaignData.filter(c => c.status === 'Completed').length + 1 },
-                  ]} cx="50%" cy="50%" innerRadius={60} outerRadius={85} dataKey="value" paddingAngle={5}>
+                    { name: 'Draft', value: campaignStats.find(c => c._id === 'Draft')?.count || 0 },
+                    { name: 'Scheduled', value: campaignStats.find(c => c._id === 'Scheduled')?.count || 0 },
+                    { name: 'Running', value: campaignStats.find(c => c._id === 'Running')?.count || 0 },
+                    { name: 'Completed', value: campaignStats.find(c => c._id === 'Completed')?.count || 0 },
+                  ].filter(d => d.value > 0)} cx="50%" cy="50%" innerRadius={60} outerRadius={85} dataKey="value" paddingAngle={5}>
                     {COLORS.map((color, i) => <Cell key={i} fill={color} />)}
                   </Pie>
                   <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
