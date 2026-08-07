@@ -16,4 +16,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // Vite 8 (Rolldown) — increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          strategy: 'route',
+        },
+      },
+    },
+  },
 })
