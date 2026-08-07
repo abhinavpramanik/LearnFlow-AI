@@ -1,0 +1,10 @@
+# Server Dependencies
+node_modules/
+dist/
+
+# Environment
+.env
+
+# Logs
+logs/
+*.log
