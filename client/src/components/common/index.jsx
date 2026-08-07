@@ -1,79 +1,117 @@
-// Button Component
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button as ShadcnButton } from '../ui/button';
+import { Badge as ShadcnBadge } from '../ui/badge';
+import { Card as ShadcnCard, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Skeleton as ShadcnSkeleton } from '../ui/skeleton';
+import { Alert as ShadcnAlert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Loader2 } from 'lucide-react';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
+
+// Button Component wrapper for backwards compatibility
 export const Button = ({
-  children, onClick, variant = 'primary', size = 'md', disabled = false, loading = false, type = 'button', className = '', icon: Icon
+  children, onClick, variant = 'default', size = 'default', disabled = false, loading = false, type = 'button', className = '', icon: Icon, ...props
 }) => {
-  const variants = {
-    primary: 'bg-indigo-600 hover:bg-indigo-500 text-white border-transparent',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-white border-transparent',
-    danger: 'bg-red-600 hover:bg-red-500 text-white border-transparent',
-    ghost: 'bg-transparent hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700',
-    success: 'bg-emerald-600 hover:bg-emerald-500 text-white border-transparent',
-    outline: 'bg-transparent hover:bg-indigo-500/10 text-indigo-400 border-indigo-500/50 hover:border-indigo-400',
+  // Map our old variants to shadcn variants
+  const variantMap = {
+    primary: 'default',
+    secondary: 'secondary',
+    danger: 'destructive',
+    ghost: 'ghost',
+    success: 'default', // Shadcn doesn't have a success button by default, we can just use default with custom class if needed
+    outline: 'outline',
   };
 
-  const sizes = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-2.5 text-base',
+  const mappedVariant = variantMap[variant] || variant;
+  
+  // Map sizes
+  const sizeMap = {
+    sm: 'sm',
+    md: 'default',
+    lg: 'lg',
   };
+  const mappedSize = sizeMap[size] || size;
 
   return (
-    <button
+    <ShadcnButton
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className={`
-        inline-flex items-center justify-center gap-2 font-medium rounded-lg border
-        transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${variants[variant]} ${sizes[size]} ${className}
-      `}
+      variant={mappedVariant}
+      size={mappedSize}
+      className={cn(variant === 'success' && 'bg-emerald-600 text-white hover:bg-emerald-500', className)}
+      {...props}
     >
       {loading ? (
-        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : Icon ? (
-        <Icon size={14} />
+        <Icon className="mr-2 h-4 w-4" />
       ) : null}
       {children}
-    </button>
+    </ShadcnButton>
   );
 };
 
 // Badge Component
-export const Badge = ({ label, variant = 'neutral' }) => (
-  <span className={`badge badge-${variant}`}>{label}</span>
-);
+export const Badge = ({ label, variant = 'default', className }) => {
+  const variantMap = {
+    success: 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25 border-emerald-500/20',
+    warning: 'bg-amber-500/15 text-amber-500 hover:bg-amber-500/25 border-amber-500/20',
+    error: 'destructive',
+    info: 'bg-blue-500/15 text-blue-500 hover:bg-blue-500/25 border-blue-500/20',
+    brand: 'default',
+    neutral: 'secondary',
+    purple: 'bg-purple-500/15 text-purple-500 hover:bg-purple-500/25 border-purple-500/20',
+  };
+  
+  const customClass = variantMap[variant] || '';
+  const isDestructive = variant === 'error';
+
+  return (
+    <ShadcnBadge variant={isDestructive ? 'destructive' : 'outline'} className={cn(!isDestructive && customClass, className)}>
+      {label}
+    </ShadcnBadge>
+  );
+};
 
 // Skeleton Component
 export const Skeleton = ({ className = 'h-4 w-full' }) => (
-  <div className={`skeleton ${className}`} />
+  <ShadcnSkeleton className={className} />
 );
 
-// Card Component
-export const Card = ({ children, className = '', hover = false }) => (
-  <div className={`card ${hover ? 'card-hover' : ''} ${className}`}>
-    {children}
-  </div>
+// Card Component (wrapper)
+export const Card = ({ children, className = '', hover = false, ...props }) => (
+  <ShadcnCard className={cn(hover && "transition-all hover:border-primary hover:shadow-sm", className)} {...props}>
+    <CardContent className="p-6">
+      {children}
+    </CardContent>
+  </ShadcnCard>
 );
 
 // Empty State Component
 export const EmptyState = ({ icon: Icon, title, description, action }) => (
-  <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-    {Icon && <Icon size={48} className="text-slate-600" />}
+  <div className="flex flex-col items-center justify-center py-16 gap-4 text-center animate-in fade-in zoom-in duration-300">
+    {Icon && <Icon size={48} className="text-muted-foreground opacity-50" />}
     <div>
-      <h3 className="text-lg font-semibold text-white mb-1">{title}</h3>
-      {description && <p className="text-slate-400 text-sm max-w-sm">{description}</p>}
+      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
+      {description && <p className="text-muted-foreground text-sm max-w-sm">{description}</p>}
     </div>
-    {action}
+    {action && <div className="mt-2">{action}</div>}
   </div>
 );
 
 // Page Header Component
 export const PageHeader = ({ title, subtitle, actions }) => (
-  <div className="flex items-start justify-between mb-6">
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
     <div>
-      <h1 className="text-2xl font-bold text-white">{title}</h1>
-      {subtitle && <p className="text-slate-400 text-sm mt-1">{subtitle}</p>}
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+      {subtitle && <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>}
     </div>
     {actions && <div className="flex items-center gap-2">{actions}</div>}
   </div>
@@ -82,44 +120,48 @@ export const PageHeader = ({ title, subtitle, actions }) => (
 // Stat Card Component
 export const StatCard = ({ title, value, icon: Icon, trend, color = 'indigo', subtitle }) => {
   const colors = {
-    indigo: { bg: 'bg-indigo-500/10', icon: 'text-indigo-400', border: 'border-indigo-500/20' },
-    green: { bg: 'bg-emerald-500/10', icon: 'text-emerald-400', border: 'border-emerald-500/20' },
-    yellow: { bg: 'bg-amber-500/10', icon: 'text-amber-400', border: 'border-amber-500/20' },
-    red: { bg: 'bg-red-500/10', icon: 'text-red-400', border: 'border-red-500/20' },
-    purple: { bg: 'bg-purple-500/10', icon: 'text-purple-400', border: 'border-purple-500/20' },
-    blue: { bg: 'bg-blue-500/10', icon: 'text-blue-400', border: 'border-blue-500/20' },
+    indigo: { bg: 'bg-indigo-500/10', icon: 'text-indigo-500' },
+    green: { bg: 'bg-emerald-500/10', icon: 'text-emerald-500' },
+    yellow: { bg: 'bg-amber-500/10', icon: 'text-amber-500' },
+    red: { bg: 'bg-red-500/10', icon: 'text-red-500' },
+    purple: { bg: 'bg-purple-500/10', icon: 'text-purple-500' },
+    blue: { bg: 'bg-blue-500/10', icon: 'text-blue-500' },
   };
 
   const c = colors[color] || colors.indigo;
 
   return (
-    <Card className={`border ${c.border} card-hover`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-slate-400 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold text-white mt-1">{value}</p>
-          {subtitle && <p className="text-slate-500 text-xs mt-1">{subtitle}</p>}
-          {trend && <p className={`text-xs mt-2 font-medium ${trend.positive ? 'text-emerald-400' : 'text-red-400'}`}>{trend.label}</p>}
-        </div>
-        {Icon && (
-          <div className={`p-3 rounded-xl ${c.bg}`}>
-            <Icon size={22} className={c.icon} />
+    <ShadcnCard className="transition-all hover:border-primary/50">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-muted-foreground text-sm font-medium">{title}</p>
+            <p className="text-3xl font-bold text-foreground mt-2">{value}</p>
+            {subtitle && <p className="text-muted-foreground text-xs mt-1">{subtitle}</p>}
+            {trend && <p className={`text-xs mt-2 font-medium ${trend.positive ? 'text-emerald-500' : 'text-red-500'}`}>{trend.label}</p>}
           </div>
-        )}
-      </div>
-    </Card>
+          {Icon && (
+            <div className={cn("p-3 rounded-xl", c.bg)}>
+              <Icon size={22} className={c.icon} />
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </ShadcnCard>
   );
 };
 
 // Confidence Bar Component
 export const ConfidenceBar = ({ confidence, label }) => (
-  <div>
-    {label && <div className="flex justify-between text-xs text-slate-400 mb-1"><span>{label}</span><span>{Math.round(confidence * 100)}%</span></div>}
-    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-      <div
-        className="h-full rounded-full transition-all duration-700"
+  <div className="w-full">
+    {label && <div className="flex justify-between text-xs text-muted-foreground mb-1.5"><span>{label}</span><span>{Math.round(confidence * 100)}%</span></div>}
+    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${confidence * 100}%` }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="h-full rounded-full"
         style={{
-          width: `${confidence * 100}%`,
           background: confidence > 0.8 ? '#10b981' : confidence > 0.5 ? '#f59e0b' : '#ef4444',
         }}
       />
@@ -132,39 +174,46 @@ export const Spinner = ({ size = 'md' }) => {
   const sizes = { sm: 'w-4 h-4', md: 'w-8 h-8', lg: 'w-12 h-12' };
   return (
     <div className="flex items-center justify-center">
-      <div className={`${sizes[size]} border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin`} />
+      <Loader2 className={cn("animate-spin text-primary", sizes[size])} />
     </div>
   );
 };
 
-// Modal Component
+// Modal Component (using Shadcn Dialog)
 export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
-  if (!isOpen) return null;
   const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' };
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative w-full ${sizes[size]} card border-slate-600 shadow-2xl animate-fade-in`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors text-xl leading-none">&times;</button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className={sizes[size]}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
         {children}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 // Alert Component
 export const Alert = ({ type = 'info', message }) => {
   const types = {
-    info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
-    success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-    warning: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    error: 'bg-red-500/10 border-red-500/30 text-red-400',
+    info: 'default',
+    success: 'default', // mapped via class
+    warning: 'default',
+    error: 'destructive',
   };
+  
+  const customClass = {
+    success: 'border-emerald-500/50 text-emerald-500',
+    warning: 'border-amber-500/50 text-amber-500',
+    info: 'border-blue-500/50 text-blue-500',
+  };
+
   return (
-    <div className={`border rounded-lg px-4 py-3 text-sm ${types[type]}`}>{message}</div>
+    <ShadcnAlert variant={types[type]} className={cn(customClass[type])}>
+      <AlertDescription>{message}</AlertDescription>
+    </ShadcnAlert>
   );
 };
 
@@ -173,34 +222,92 @@ export const Pagination = ({ pagination, onChange }) => {
   if (!pagination || pagination.pages <= 1) return null;
   const { page, pages } = pagination;
   return (
-    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700">
-      <span className="text-sm text-slate-400">Page {page} of {pages} ({pagination.total} total)</span>
+    <div className="flex items-center justify-between mt-6 pt-4 border-t">
+      <span className="text-sm text-muted-foreground">Page {page} of {pages} ({pagination.total} total)</span>
       <div className="flex gap-2">
-        <button disabled={page === 1} onClick={() => onChange(page - 1)} className="px-3 py-1.5 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Previous</button>
-        <button disabled={page === pages} onClick={() => onChange(page + 1)} className="px-3 py-1.5 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next</button>
+        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onChange(page - 1)}>Previous</Button>
+        <Button variant="outline" size="sm" disabled={page === pages} onClick={() => onChange(page + 1)}>Next</Button>
       </div>
     </div>
   );
 };
 
 // AI Result Card
-export const AIResultCard = ({ result, icon: Icon, iconColor = 'text-purple-400', iconBg = 'bg-purple-500/10' }) => (
-  <div className="card border-purple-500/20">
-    <div className="flex items-start gap-3 mb-3">
-      <div className={`p-2 rounded-lg ${iconBg}`}>
-        {Icon && <Icon size={18} className={iconColor} />}
+export const AIResultCard = ({ result, icon: Icon, iconColor = 'text-purple-500', iconBg = 'bg-purple-500/10' }) => (
+  <ShadcnCard className="border-purple-500/30 overflow-hidden relative">
+    <div className="absolute inset-0 bg-purple-500/5 pointer-events-none" />
+    <CardContent className="p-5 relative z-10">
+      <div className="flex items-start gap-4 mb-4">
+        <div className={cn("p-2.5 rounded-xl", iconBg)}>
+          {Icon && <Icon size={20} className={iconColor} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-foreground font-semibold text-sm leading-relaxed">{result?.result || 'N/A'}</p>
+          <p className="text-muted-foreground text-sm mt-1.5">{result?.explanation}</p>
+        </div>
+        {result?.reviewRequired && <Badge label="Review Required" variant="warning" className="shrink-0" />}
       </div>
-      <div className="flex-1">
-        <p className="text-white font-semibold text-sm">{result?.result || 'N/A'}</p>
-        <p className="text-slate-400 text-xs mt-1">{result?.explanation}</p>
-      </div>
-      {result?.reviewRequired && <span className="badge badge-warning">Review Required</span>}
-    </div>
-    {result?.confidence !== undefined && (
-      <ConfidenceBar confidence={result.confidence} label="Confidence" />
-    )}
-    {result?.modelVersion && (
-      <p className="text-xs text-slate-600 mt-2">Model: {result.modelVersion} · {result.timestamp ? new Date(result.timestamp).toLocaleTimeString() : ''}</p>
-    )}
-  </div>
+      {result?.confidence !== undefined && (
+        <div className="mt-2">
+          <ConfidenceBar confidence={result.confidence} label="Confidence Score" />
+        </div>
+      )}
+      {result?.modelVersion && (
+        <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
+          <span>Model: {result.modelVersion}</span>
+          <span>&middot;</span>
+          <span>{result.timestamp ? new Date(result.timestamp).toLocaleTimeString() : ''}</span>
+        </p>
+      )}
+    </CardContent>
+  </ShadcnCard>
 );
+
+// Framer Motion Page Wrapper
+export const AnimatedPage = ({ children, className }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.3, ease: "easeOut" }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
+
+// Framer Motion List Wrapper
+export const AnimatedList = ({ children, className }) => {
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+  return (
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// Framer Motion List Item Wrapper
+export const AnimatedListItem = ({ children, className, onClick }) => {
+  const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+  return (
+    <motion.div variants={item} className={className} onClick={onClick}>
+      {children}
+    </motion.div>
+  );
+};

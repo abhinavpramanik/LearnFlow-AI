@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ticketService, aiService } from '../../services';
 import { useAuth } from '../../context/AuthContext';
-import { Card, Badge, Button, Spinner, AIResultCard } from '../../components/common';
+import { Card, Badge, Button, Spinner, AIResultCard, AnimatedPage } from '../../components/common';
 import { ArrowLeft, Send, Zap, AlertTriangle, CheckCircle, Brain } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { motion } from 'framer-motion';
 
 const STATUS_COLORS = { Open: 'error', Pending: 'warning', 'In Progress': 'info', Escalated: 'error', Closed: 'success' };
 const PRIORITY_COLORS = { Low: 'neutral', Medium: 'info', High: 'warning', Critical: 'error' };
@@ -79,22 +81,22 @@ const TicketDetailPage = () => {
   };
 
   if (loading) return <div className="flex justify-center py-24"><Spinner size="lg" /></div>;
-  if (!ticket) return <div className="text-center py-24 text-slate-400">Ticket not found</div>;
+  if (!ticket) return <div className="text-center py-24 text-muted-foreground">Ticket not found</div>;
 
   return (
-    <div className="animate-fade-in space-y-6 max-w-5xl mx-auto">
+    <AnimatedPage className="space-y-6 max-w-5xl mx-auto pb-10">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/tickets')} className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/tickets')} className="w-10 h-10 p-0 rounded-full shrink-0">
           <ArrowLeft size={20} />
-        </button>
+        </Button>
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs text-slate-500 font-mono">#{ticket._id.slice(-6).toUpperCase()}</span>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-xs text-muted-foreground font-mono font-medium">#{ticket._id.slice(-6).toUpperCase()}</span>
             <Badge label={ticket.priority} variant={PRIORITY_COLORS[ticket.priority]} />
             <Badge label={ticket.status} variant={STATUS_COLORS[ticket.status]} />
           </div>
-          <h1 className="text-xl font-bold text-white">{ticket.title}</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{ticket.title}</h1>
         </div>
         {hasRole('Service Agent', 'Admin') && ticket.status !== 'Closed' && (
           <div className="flex gap-2">
@@ -109,85 +111,99 @@ const TicketDetailPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Messages */}
         <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <h3 className="font-semibold text-white mb-1">Description</h3>
-            <p className="text-slate-300 text-sm">{ticket.description}</p>
+          <Card className="bg-muted/30">
+            <h3 className="font-semibold text-foreground mb-2">Description</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">{ticket.description}</p>
           </Card>
 
           <Card>
-            <h3 className="font-semibold text-white mb-4">Conversation ({messages.length})</h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-              {messages.map(msg => (
-                <div key={msg._id} className={`flex gap-3 ${msg.aiDraft ? 'opacity-90' : ''}`}>
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs text-indigo-400 font-bold flex-shrink-0">
-                    {msg.sender?.firstName?.[0]}{msg.sender?.lastName?.[0]}
-                  </div>
-                  <div className={`flex-1 rounded-xl p-3 ${msg.aiDraft ? 'bg-purple-500/10 border border-purple-500/20' : 'bg-slate-800'}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold text-white">{msg.sender?.firstName} {msg.sender?.lastName}</span>
-                      {msg.aiDraft && <span className="badge badge-purple text-[10px]">AI Draft</span>}
-                      <span className="text-xs text-slate-500 ml-auto">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
+            <h3 className="font-semibold text-foreground mb-4 border-b pb-4">Conversation ({messages.length})</h3>
+            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              {messages.map((msg, i) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  key={msg._id} 
+                  className={`flex gap-4 ${msg.aiDraft ? 'opacity-90' : ''}`}
+                >
+                  <Avatar className="h-10 w-10 border border-primary/20 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {msg.sender?.firstName?.[0]}{msg.sender?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className={`flex-1 rounded-2xl p-4 ${msg.aiDraft ? 'bg-purple-500/10 border border-purple-500/20' : 'bg-muted/50 border border-border'}`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-sm font-semibold text-foreground">{msg.sender?.firstName} {msg.sender?.lastName}</span>
+                      {msg.aiDraft && <Badge label="AI Draft" variant="purple" className="text-[10px] px-1.5 py-0" />}
+                      <span className="text-xs text-muted-foreground ml-auto">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
                     </div>
-                    <p className="text-sm text-slate-300">{msg.message}</p>
+                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
               <div ref={messagesEndRef} />
             </div>
 
             {ticket.status !== 'Closed' && (
-              <div className="mt-4 pt-4 border-t border-slate-700 space-y-3">
+              <div className="mt-6 pt-6 border-t border-border space-y-4 bg-card">
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={reply}
                   onChange={e => setReply(e.target.value)}
-                  placeholder="Type your reply..."
-                  className="form-input resize-none"
+                  placeholder="Type your reply here..."
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-3">
                   {hasRole('Service Agent', 'Admin') && (
-                    <Button variant="ghost" size="sm" icon={Brain} loading={aiLoading.draft} onClick={getDraft}>AI Draft</Button>
+                    <Button variant="outline" size="md" icon={Brain} loading={aiLoading.draft} onClick={getDraft} className="w-full sm:w-auto text-purple-500 border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-600">
+                      Generate AI Draft
+                    </Button>
                   )}
-                  <Button icon={Send} loading={sending} onClick={sendReply} className="ml-auto">Send Reply</Button>
+                  <Button icon={Send} loading={sending} onClick={sendReply} className="w-full sm:w-auto sm:ml-auto">Send Reply</Button>
                 </div>
               </div>
             )}
           </Card>
 
           {/* AI Draft Result */}
-          {aiDraft && <AIResultCard result={aiDraft} icon={Brain} />}
+          {aiDraft && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+              <AIResultCard result={aiDraft} icon={Brain} />
+            </motion.div>
+          )}
         </div>
 
         {/* Sidebar Info */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Card>
-            <h3 className="font-semibold text-white mb-3">Ticket Info</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-slate-400">Created by</span><span className="text-white">{ticket.createdBy?.firstName} {ticket.createdBy?.lastName}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Assigned to</span><span className="text-white">{ticket.assignedAgent ? `${ticket.assignedAgent.firstName} ${ticket.assignedAgent.lastName}` : 'Unassigned'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">Created</span><span className="text-slate-300">{formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}</span></div>
+            <h3 className="font-semibold text-foreground mb-4">Ticket Info</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center py-1 border-b border-border/50"><span className="text-muted-foreground">Created by</span><span className="text-foreground font-medium">{ticket.createdBy?.firstName} {ticket.createdBy?.lastName}</span></div>
+              <div className="flex justify-between items-center py-1 border-b border-border/50"><span className="text-muted-foreground">Assigned to</span><span className="text-foreground font-medium">{ticket.assignedAgent ? `${ticket.assignedAgent.firstName} ${ticket.assignedAgent.lastName}` : 'Unassigned'}</span></div>
+              <div className="flex justify-between items-center py-1 border-b border-border/50"><span className="text-muted-foreground">Created</span><span className="text-foreground font-medium">{formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}</span></div>
             </div>
           </Card>
 
           {/* AI Actions */}
           {hasRole('Service Agent', 'Admin') && (
-            <Card className="border-purple-500/20">
-              <h3 className="font-semibold text-white mb-3 flex items-center gap-2"><Zap size={16} className="text-purple-400" />AI Assistance</h3>
-              <div className="space-y-2">
-                <Button variant="ghost" size="sm" loading={aiLoading.summary} onClick={getSummary} className="w-full border-purple-500/20 text-purple-400 hover:bg-purple-500/10">
+            <Card className="border-purple-500/30 bg-purple-500/5">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Zap size={18} className="text-purple-500 fill-purple-500/20" />AI Assistance</h3>
+              <div className="space-y-3">
+                <Button variant="outline" size="md" loading={aiLoading.summary} onClick={getSummary} className="w-full border-purple-500/30 text-purple-600 hover:bg-purple-500/10 hover:text-purple-700">
                   Summarize Conversation
                 </Button>
               </div>
               {aiSummary && (
-                <div className="mt-4">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
                   <AIResultCard result={aiSummary} icon={Brain} />
-                </div>
+                </motion.div>
               )}
             </Card>
           )}
         </div>
       </div>
-    </div>
+    </AnimatedPage>
   );
 };
 

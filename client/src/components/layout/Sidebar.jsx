@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Users, Map, Megaphone, Ticket, Brain, BarChart3,
   Bell, Shield, Settings, ChevronLeft, ChevronRight, LogOut, BookOpen, ClipboardList
 } from 'lucide-react';
+import { cn } from '../common';
+import { Button } from '../ui/button';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['Customer', 'Service Agent', 'Marketing Manager', 'Sales Manager', 'Admin'] },
@@ -32,66 +35,79 @@ const Sidebar = ({ collapsed, onToggle }) => {
   const visibleItems = NAV_ITEMS.filter(item => hasRole(...item.roles));
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <motion.aside 
+      initial={false}
+      animate={{ width: collapsed ? 64 : 260 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="bg-card border-r border-border h-screen fixed top-0 left-0 flex flex-col z-50 overflow-hidden"
+    >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-700">
-        <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center flex-shrink-0">
-          <BookOpen size={16} className="text-white" />
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-border h-16 shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+          <BookOpen size={16} className="text-primary" />
         </div>
-        {!collapsed && (
-          <div>
-            <span className="text-white font-bold text-sm">LearnFlow</span>
-            <span className="text-indigo-400 font-bold text-sm"> AI</span>
-          </div>
-        )}
+        <AnimateText show={!collapsed}>
+          <span className="text-foreground font-bold text-sm tracking-wide">LearnFlow</span>
+          <span className="text-primary font-bold text-sm tracking-wide"> AI</span>
+        </AnimateText>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2 space-y-1">
         {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
-            className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
             title={collapsed ? item.label : undefined}
+            className={({ isActive }) => cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all group",
+              isActive 
+                ? "bg-primary/15 text-primary" 
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
           >
-            <item.icon size={18} className="flex-shrink-0 nav-icon" />
-            {!collapsed && <span>{item.label}</span>}
+            <item.icon size={18} className="shrink-0" />
+            <AnimateText show={!collapsed}>
+              {item.label}
+            </AnimateText>
           </NavLink>
         ))}
       </nav>
 
       {/* User + Collapse */}
-      <div className="border-t border-slate-700 p-3">
-        {!collapsed && user && (
-          <div className="flex items-center gap-2 px-2 py-2 mb-2">
-            <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-              {user.firstName?.[0]}{user.lastName?.[0]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-xs font-semibold truncate">{user.firstName} {user.lastName}</p>
-              <p className="text-slate-500 text-xs truncate">{user.role?.name}</p>
-            </div>
-          </div>
-        )}
-        <button
-          onClick={handleLogout}
-          className="sidebar-nav-item w-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
-          title={collapsed ? 'Logout' : undefined}
-        >
-          <LogOut size={18} className="flex-shrink-0" />
-          {!collapsed && <span>Logout</span>}
-        </button>
-        <button
+      <div className="border-t border-border p-3 space-y-1 shrink-0">
+        <Button 
+          variant="ghost" 
+          className={cn("w-full justify-start text-muted-foreground hover:text-foreground", collapsed ? "px-0 justify-center" : "px-3")}
           onClick={onToggle}
-          className="sidebar-nav-item w-full mt-1"
           title={collapsed ? 'Expand' : 'Collapse'}
         >
-          {collapsed ? <ChevronRight size={18} /> : <><ChevronLeft size={18} /><span>Collapse</span></>}
-        </button>
+          {collapsed ? <ChevronRight size={18} /> : (
+            <>
+              <ChevronLeft size={18} className="mr-2" />
+              <span>Collapse</span>
+            </>
+          )}
+        </Button>
       </div>
-    </aside>
+    </motion.aside>
   );
 };
+
+// Helper component to animate text hiding/showing smoothly
+const AnimateText = ({ show, children }) => (
+  <motion.div
+    initial={false}
+    animate={{ 
+      opacity: show ? 1 : 0, 
+      width: show ? 'auto' : 0,
+      display: show ? 'block' : 'none'
+    }}
+    transition={{ duration: 0.2 }}
+    className="whitespace-nowrap overflow-hidden"
+  >
+    {children}
+  </motion.div>
+);
 
 export default Sidebar;

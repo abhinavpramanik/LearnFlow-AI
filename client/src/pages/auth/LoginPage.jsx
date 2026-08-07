@@ -3,6 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { BookOpen, Eye, EyeOff, Brain } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 
 const ROLE_DASHBOARDS = {
   'Admin': '/dashboard',
@@ -51,29 +55,44 @@ const LoginPage = () => {
   const fillDemo = (email) => setForm({ email, password: email.includes('admin') ? 'Admin@1234' : email.includes('agent') ? 'Agent@1234' : email.includes('marketing') ? 'Mark@1234' : email.includes('sales') ? 'Sales@1234' : 'Customer@1234' });
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left — Branding Panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-brand opacity-10" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl" />
+      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative overflow-hidden bg-muted/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" 
+        />
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+          className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl" 
+        />
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center">
-            <BookOpen size={20} className="text-white" />
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+            <BookOpen size={20} className="text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-white">LearnFlow <span className="text-indigo-400">AI</span></span>
+          <span className="text-xl font-bold tracking-tight text-foreground">LearnFlow <span className="text-primary">AI</span></span>
         </div>
 
-        <div className="relative z-10">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="relative z-10"
+        >
           <div className="flex items-center gap-2 mb-6">
-            <Brain size={24} className="text-indigo-400" />
-            <span className="text-indigo-400 font-semibold">AI-Powered Learning Platform</span>
+            <Brain size={24} className="text-primary" />
+            <span className="text-primary font-semibold tracking-wide text-sm uppercase">AI-Powered Learning Platform</span>
           </div>
-          <h1 className="text-5xl font-bold text-white leading-tight mb-6">
+          <h1 className="text-5xl font-extrabold text-foreground leading-tight mb-6">
             Unified Customer<br />Journey Intelligence
           </h1>
-          <p className="text-slate-300 text-lg leading-relaxed max-w-md">
+          <p className="text-muted-foreground text-lg leading-relaxed max-w-md">
             Orchestrate personalized learning journeys with AI-assisted recommendations,
             real-time insights, and enterprise-grade governance.
           </p>
@@ -83,84 +102,95 @@ const LoginPage = () => {
               { label: 'Enterprise Ready', desc: 'Role-based access control' },
               { label: 'Real-time', desc: 'Live journey tracking' },
               { label: 'Secure', desc: 'JWT & audit logging' },
-            ].map(item => (
-              <div key={item.label} className="glass rounded-xl p-4">
-                <p className="text-white font-semibold text-sm">{item.label}</p>
-                <p className="text-slate-400 text-xs mt-1">{item.desc}</p>
-              </div>
+            ].map((item, i) => (
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 + (i * 0.1) }}
+                key={item.label} 
+                className="bg-background/40 backdrop-blur-md rounded-xl p-4 border border-border"
+              >
+                <p className="text-foreground font-semibold text-sm">{item.label}</p>
+                <p className="text-muted-foreground text-xs mt-1">{item.desc}</p>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <p className="relative z-10 text-slate-500 text-sm">© 2025 LearnFlow AI. Enterprise Learning & Development.</p>
+        <p className="relative z-10 text-muted-foreground text-sm">© 2025 LearnFlow AI. Enterprise Learning & Development.</p>
       </div>
 
       {/* Right — Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md animate-fade-in">
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+        <motion.div 
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center">
-              <BookOpen size={18} className="text-white" />
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+              <BookOpen size={18} className="text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-white">LearnFlow <span className="text-indigo-400">AI</span></span>
+            <span className="text-lg font-bold text-foreground">LearnFlow <span className="text-primary">AI</span></span>
           </div>
 
-          <h2 className="text-3xl font-bold text-white mb-2">Welcome back</h2>
-          <p className="text-slate-400 mb-8">Sign in to your account to continue</p>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground mb-2">Welcome back</h2>
+          <p className="text-muted-foreground mb-8">Sign in to your account to continue</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="form-label">Email address</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="login-email" className={errors.email ? "text-destructive" : ""}>Email address</Label>
+              <Input
                 id="login-email"
                 type="email"
                 autoComplete="email"
                 placeholder="you@company.com"
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+                className={errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}
               />
-              {errors.email && <p className="form-error">{errors.email}</p>}
+              {errors.email && <p className="text-[0.8rem] font-medium text-destructive">{errors.email}</p>}
             </div>
 
-            <div>
-              <label className="form-label">Password</label>
+            <div className="space-y-2">
+              <Label htmlFor="login-password" className={errors.password ? "text-destructive" : ""}>Password</Label>
               <div className="relative">
-                <input
+                <Input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="Enter your password"
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  className={`form-input pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                  className={`pr-10 ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.password && <p className="form-error">{errors.password}</p>}
+              {errors.password && <p className="text-[0.8rem] font-medium text-destructive">{errors.password}</p>}
             </div>
 
-            <button
+            <Button
               id="login-btn"
               type="submit"
               disabled={loading}
-              className="w-full py-3 gradient-brand text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full mt-2"
+              size="lg"
             >
-              {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
               {loading ? 'Signing in...' : 'Sign In'}
-            </button>
+            </Button>
           </form>
 
           {/* Demo accounts */}
-          <div className="mt-8 pt-6 border-t border-slate-700">
-            <p className="text-xs text-slate-500 mb-3 text-center">Demo Accounts (click to fill)</p>
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-3 text-center uppercase tracking-wider font-semibold">Demo Accounts (click to fill)</p>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Admin', email: 'admin@learnflow.ai' },
@@ -172,16 +202,16 @@ const LoginPage = () => {
                   key={acc.email}
                   type="button"
                   onClick={() => fillDemo(acc.email)}
-                  className="text-xs py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors text-left"
+                  className="text-xs py-2 px-3 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors text-left border border-border"
                 >
-                  <span className="font-semibold text-indigo-400">{acc.label}</span>
+                  <span className="font-semibold text-primary">{acc.label}</span>
                   <br />
-                  <span className="text-slate-500">{acc.email}</span>
+                  <span className="text-muted-foreground">{acc.email}</span>
                 </button>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spinner, PageHeader, Button, Badge, EmptyState, Pagination, Card } from '../../components/common';
+import { Spinner, PageHeader, Button, Badge, EmptyState, Pagination, Card, AnimatedPage, AnimatedList, AnimatedListItem } from '../../components/common';
 import { ticketService } from '../../services';
 import { useAuth } from '../../context/AuthContext';
-import { Ticket, Plus, Search, Filter, User, Clock } from 'lucide-react';
+import { Ticket, Plus, Search, User, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
 
 const STATUS_COLORS = { Open: 'error', Pending: 'warning', 'In Progress': 'info', Escalated: 'error', Closed: 'success' };
 const PRIORITY_COLORS = { Low: 'neutral', Medium: 'info', High: 'warning', Critical: 'error' };
@@ -50,7 +53,7 @@ const TicketsPage = () => {
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <AnimatedPage className="space-y-6">
       <PageHeader
         title="Service Tickets"
         subtitle="Manage and track all customer support requests"
@@ -60,15 +63,25 @@ const TicketsPage = () => {
       />
 
       {/* Filters */}
-      <Card>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-            <input type="text" placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="form-input pl-9" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input 
+              type="text" 
+              placeholder="Search tickets..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="pl-9" 
+            />
           </div>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="form-input w-auto">
+          <select 
+            value={statusFilter} 
+            onChange={e => setStatusFilter(e.target.value)} 
+            className="flex h-10 w-full sm:w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             <option value="">All Status</option>
-            {['Open', 'Pending', 'In Progress', 'Escalated', 'Closed'].map(s => <option key={s}>{s}</option>)}
+            {['Open', 'Pending', 'In Progress', 'Escalated', 'Closed'].map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </Card>
@@ -76,68 +89,83 @@ const TicketsPage = () => {
       {/* Ticket List */}
       <Card>
         {loading ? (
-          <div className="flex justify-center py-12"><Spinner /></div>
+          <div className="flex justify-center py-12"><Spinner size="lg" /></div>
         ) : tickets.length === 0 ? (
           <EmptyState icon={Ticket} title="No tickets found" description="No tickets match your current filters" />
         ) : (
-          <div className="space-y-2">
+          <AnimatedList className="space-y-3">
             {tickets.map(ticket => (
-              <div
+              <AnimatedListItem
                 key={ticket._id}
                 onClick={() => navigate(`/tickets/${ticket._id}`)}
-                className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 hover:border-indigo-500/30 border border-transparent transition-all duration-200 cursor-pointer"
+                className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-card border hover:border-primary/50 hover:shadow-sm transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-slate-500 font-mono">#{ticket._id.slice(-6).toUpperCase()}</span>
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <span className="text-xs text-muted-foreground font-mono font-medium">#{ticket._id.slice(-6).toUpperCase()}</span>
                     <Badge label={ticket.priority} variant={PRIORITY_COLORS[ticket.priority]} />
                   </div>
-                  <p className="text-white font-medium truncate">{ticket.title}</p>
-                  <div className="flex items-center gap-4 mt-1">
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <User size={12} /> {ticket.createdBy?.firstName} {ticket.createdBy?.lastName}
+                  <p className="text-foreground font-semibold truncate group-hover:text-primary transition-colors">{ticket.title}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <User size={14} className="text-muted-foreground" /> {ticket.createdBy?.firstName} {ticket.createdBy?.lastName}
                     </span>
-                    <span className="text-xs text-slate-500 flex items-center gap-1">
-                      <Clock size={12} /> {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Clock size={14} className="text-muted-foreground" /> {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
                     </span>
                   </div>
                 </div>
-                <Badge label={ticket.status} variant={STATUS_COLORS[ticket.status]} />
-              </div>
+                <Badge label={ticket.status} variant={STATUS_COLORS[ticket.status]} className="shrink-0 self-start sm:self-center" />
+              </AnimatedListItem>
             ))}
-          </div>
+          </AnimatedList>
         )}
         <Pagination pagination={pagination} onChange={setPage} />
       </Card>
 
-      {/* Create Ticket Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
-          <div className="relative w-full max-w-lg card border-slate-600 shadow-2xl animate-fade-in space-y-4">
-            <h2 className="text-xl font-bold text-white">Create New Ticket</h2>
-            <div>
-              <label className="form-label">Title *</label>
-              <input type="text" placeholder="Brief description of the issue" value={newTicket.title} onChange={e => setNewTicket(t => ({ ...t, title: e.target.value }))} className="form-input" />
+      {/* Create Ticket Modal using Shadcn Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create New Ticket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input 
+                placeholder="Brief description of the issue" 
+                value={newTicket.title} 
+                onChange={e => setNewTicket(t => ({ ...t, title: e.target.value }))} 
+              />
             </div>
-            <div>
-              <label className="form-label">Description *</label>
-              <textarea rows={4} placeholder="Provide detailed information..." value={newTicket.description} onChange={e => setNewTicket(t => ({ ...t, description: e.target.value }))} className="form-input resize-none" />
+            <div className="space-y-2">
+              <Label>Description *</Label>
+              <textarea 
+                rows={4} 
+                placeholder="Provide detailed information..." 
+                value={newTicket.description} 
+                onChange={e => setNewTicket(t => ({ ...t, description: e.target.value }))} 
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none" 
+              />
             </div>
-            <div>
-              <label className="form-label">Priority</label>
-              <select value={newTicket.priority} onChange={e => setNewTicket(t => ({ ...t, priority: e.target.value }))} className="form-input">
-                {['Low', 'Medium', 'High', 'Critical'].map(p => <option key={p}>{p}</option>)}
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <select 
+                value={newTicket.priority} 
+                onChange={e => setNewTicket(t => ({ ...t, priority: e.target.value }))} 
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {['Low', 'Medium', 'High', 'Critical'].map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-            <div className="flex gap-3 pt-2">
-              <Button onClick={() => setShowCreate(false)} variant="ghost" className="flex-1">Cancel</Button>
-              <Button onClick={createTicket} loading={creating} className="flex-1">Create Ticket</Button>
-            </div>
           </div>
-        </div>
-      )}
-    </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button onClick={createTicket} loading={creating}>Create Ticket</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AnimatedPage>
   );
 };
 

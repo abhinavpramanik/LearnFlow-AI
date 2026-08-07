@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { notificationService } from '../../services';
-import { Card, PageHeader, Button, Spinner, Badge, EmptyState } from '../../components/common';
+import { Card, PageHeader, Button, Spinner, Badge, EmptyState, AnimatedPage, AnimatedList, AnimatedListItem } from '../../components/common';
 import { Bell, CheckCheck, Info, AlertTriangle, AlertCircle, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 const SEV_CONFIG = {
-  Info: { icon: Info, color: 'badge-info', iconColor: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/20' },
-  Warning: { icon: AlertTriangle, color: 'badge-warning', iconColor: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/20' },
-  Urgent: { icon: AlertCircle, color: 'badge-error', iconColor: 'text-red-400', bg: 'bg-red-500/5 border-red-500/20' },
-  System: { icon: Zap, color: 'badge-neutral', iconColor: 'text-slate-400', bg: 'bg-slate-700/50 border-slate-600/30' },
+  Info: { icon: Info, color: 'neutral', iconColor: 'text-blue-500', bg: 'bg-blue-500/10' },
+  Warning: { icon: AlertTriangle, color: 'warning', iconColor: 'text-amber-500', bg: 'bg-amber-500/10' },
+  Urgent: { icon: AlertCircle, color: 'error', iconColor: 'text-destructive', bg: 'bg-destructive/10' },
+  System: { icon: Zap, color: 'neutral', iconColor: 'text-muted-foreground', bg: 'bg-muted' },
 };
 
 const NotificationsPage = () => {
@@ -48,57 +48,59 @@ const NotificationsPage = () => {
   };
 
   return (
-    <div className="animate-fade-in space-y-6 max-w-3xl mx-auto">
+    <AnimatedPage className="space-y-6 max-w-3xl mx-auto pb-10">
       <PageHeader
-        title={<>Notifications {unreadCount > 0 && <span className="ml-2 badge badge-brand">{unreadCount} new</span>}</>}
+        title={<div className="flex items-center gap-3">Notifications {unreadCount > 0 && <Badge label={`${unreadCount} new`} variant="brand" className="text-sm" />}</div>}
         subtitle="Stay updated with system alerts, AI completions, and assignments"
         actions={unreadCount > 0 && (
-          <Button variant="ghost" size="sm" icon={CheckCheck} onClick={markAllRead}>Mark all read</Button>
+          <Button variant="outline" size="sm" icon={CheckCheck} onClick={markAllRead}>Mark all read</Button>
         )}
       />
 
       {/* Filter Tabs */}
-      <div className="flex gap-1 bg-slate-800 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-muted p-1 rounded-xl w-fit border border-border">
         {['all', 'unread'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${filter === f ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+            className={`px-5 py-2 rounded-lg text-sm font-semibold capitalize transition-all duration-200 ${filter === f ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'}`}>
             {f}
           </button>
         ))}
       </div>
 
       <Card>
-        {loading ? <div className="flex justify-center py-12"><Spinner /></div> : notifications.length === 0 ? (
+        {loading ? <div className="flex justify-center py-12"><Spinner size="lg" /></div> : notifications.length === 0 ? (
           <EmptyState icon={Bell} title="No notifications" description={filter === 'unread' ? 'All caught up!' : 'No notifications yet'} />
         ) : (
-          <div className="space-y-2">
+          <AnimatedList className="space-y-3">
             {notifications.map(n => {
               const sev = SEV_CONFIG[n.severity] || SEV_CONFIG.Info;
               return (
-                <div key={n._id}
+                <AnimatedListItem key={n._id}
                   onClick={() => !n.read && markRead(n._id)}
-                  className={`flex gap-4 p-4 rounded-xl border transition-all cursor-pointer ${!n.read ? sev.bg : 'border-transparent hover:bg-slate-800/50'}`}>
-                  <div className={`p-2 rounded-lg ${!n.read ? 'bg-current/10' : 'bg-slate-800'} flex-shrink-0 h-fit`}>
-                    <sev.icon size={18} className={sev.iconColor} />
+                  className={`flex gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer ${!n.read ? `bg-card border-primary/30 shadow-sm ring-1 ring-primary/10` : 'border-transparent bg-muted/30 hover:bg-muted/60'}`}>
+                  <div className={`p-2.5 rounded-xl flex-shrink-0 h-fit ${sev.bg}`}>
+                    <sev.icon size={20} className={sev.iconColor} />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-semibold ${!n.read ? 'text-white' : 'text-slate-300'}`}>{n.title}</p>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {!n.read && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
-                        <span className="text-xs text-slate-500 whitespace-nowrap">{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-1">
+                      <p className={`text-base font-semibold truncate ${!n.read ? 'text-foreground' : 'text-muted-foreground'}`}>{n.title}</p>
+                      <div className="flex items-center gap-2 flex-shrink-0 sm:mt-1">
+                        {!n.read && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                        <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}</span>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{n.body}</p>
-                    <span className={`badge mt-2 text-[10px] ${sev.color}`}>{n.severity}</span>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{n.body}</p>
+                    <div className="mt-3">
+                      <Badge label={n.severity} variant={sev.color} className="text-[10px] px-1.5 py-0" />
+                    </div>
                   </div>
-                </div>
+                </AnimatedListItem>
               );
             })}
-          </div>
+          </AnimatedList>
         )}
       </Card>
-    </div>
+    </AnimatedPage>
   );
 };
 

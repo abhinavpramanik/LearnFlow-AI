@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { campaignService, segmentService } from '../../services';
-import { Card, PageHeader, Button, Spinner, Badge, EmptyState, Pagination, Modal } from '../../components/common';
-import { Megaphone, Plus, Search, Layers } from 'lucide-react';
+import { Card, PageHeader, Button, Spinner, Badge, EmptyState, Pagination, AnimatedPage, AnimatedList, AnimatedListItem } from '../../components/common';
+import { Megaphone, Plus, Search, Layers, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 
 const STATUS_COLORS = { Draft: 'neutral', Scheduled: 'info', Running: 'success', Completed: 'brand', Cancelled: 'error' };
 
@@ -14,12 +17,15 @@ const CampaignsPage = () => {
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  
+  // Modals
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', segmentId: '', channels: [], message: '', frequency: 'Once' });
-  const [segPagination, setSegPagination] = useState({});
+  
   const [showCreateSeg, setShowCreateSeg] = useState(false);
   const [segForm, setSegForm] = useState({ name: '', description: '' });
+  const [segPagination, setSegPagination] = useState({});
 
   const fetchCampaigns = async () => {
     setLoading(true);
@@ -78,7 +84,7 @@ const CampaignsPage = () => {
   const toggleChannel = (ch) => setForm(f => ({ ...f, channels: f.channels.includes(ch) ? f.channels.filter(c => c !== ch) : [...f.channels, ch] }));
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <AnimatedPage className="space-y-6">
       <PageHeader
         title="Campaigns & Segments"
         subtitle="Build targeted outreach campaigns for your learners"
@@ -90,114 +96,150 @@ const CampaignsPage = () => {
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-800 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-muted p-1 rounded-xl w-fit border border-border">
         {['campaigns', 'segments'].map(t => (
           <button key={t} onClick={() => { setTab(t); setPage(1); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 capitalize ${tab === t ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-            {t === 'campaigns' ? <><Megaphone size={14} className="inline mr-1.5" />Campaigns</> : <><Layers size={14} className="inline mr-1.5" />Segments</>}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 capitalize ${tab === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'}`}>
+            {t === 'campaigns' ? <><Megaphone size={16} className="inline mr-2 -mt-0.5" />Campaigns</> : <><Layers size={16} className="inline mr-2 -mt-0.5" />Segments</>}
           </button>
         ))}
       </div>
 
       {tab === 'campaigns' && (
-        <>
-          <Card>
+        <div className="space-y-6">
+          <Card className="p-4">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input type="text" placeholder="Search campaigns..." value={search} onChange={e => setSearch(e.target.value)} className="form-input pl-9" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input type="text" placeholder="Search campaigns..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
           </Card>
           <Card>
-            {loading ? <div className="flex justify-center py-12"><Spinner /></div> : campaigns.length === 0 ? (
+            {loading ? <div className="flex justify-center py-12"><Spinner size="lg" /></div> : campaigns.length === 0 ? (
               <EmptyState icon={Megaphone} title="No campaigns yet" description="Create your first campaign to reach learners" />
             ) : (
-              <div className="space-y-3">
+              <AnimatedList className="space-y-3">
                 {campaigns.map(c => (
-                  <div key={c._id} className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors border border-slate-700">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white">{c.name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Segment: {c.segmentId?.name} · {c.frequency} · {c.channels?.join(', ')}</p>
+                  <AnimatedListItem key={c._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors shadow-sm">
+                    <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0 hidden sm:block">
+                      <Megaphone size={20} />
                     </div>
-                    <Badge label={c.status} variant={STATUS_COLORS[c.status]} />
-                    {c.status === 'Draft' && (
-                      <Button size="sm" onClick={() => publishCampaign(c._id)}>Publish</Button>
-                    )}
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-foreground text-lg mb-1">{c.name}</h4>
+                      <div className="flex items-center gap-3 flex-wrap text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1"><Layers size={14} /> {c.segmentId?.name || 'No Segment'}</span>
+                        <span>&middot;</span>
+                        <span className="flex items-center gap-1"><Clock size={14} /> {c.frequency}</span>
+                        <span>&middot;</span>
+                        <span className="font-medium text-foreground/80">{c.channels?.join(', ')}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-4 sm:mt-0 justify-between sm:justify-end shrink-0">
+                      <Badge label={c.status} variant={STATUS_COLORS[c.status]} />
+                      {c.status === 'Draft' && (
+                        <Button size="sm" variant="outline" onClick={() => publishCampaign(c._id)}>Publish</Button>
+                      )}
+                    </div>
+                  </AnimatedListItem>
                 ))}
-              </div>
+              </AnimatedList>
             )}
             <Pagination pagination={pagination} onChange={setPage} />
           </Card>
-        </>
+        </div>
       )}
 
       {tab === 'segments' && (
         <Card>
-          {loading ? <div className="flex justify-center py-12"><Spinner /></div> : segments.length === 0 ? (
+          {loading ? <div className="flex justify-center py-12"><Spinner size="lg" /></div> : segments.length === 0 ? (
             <EmptyState icon={Layers} title="No segments yet" description="Create segments to target specific learner groups" />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AnimatedList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {segments.map(s => (
-                <div key={s._id} className="card border-slate-600 card-hover">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="p-2 rounded-lg bg-indigo-500/10"><Layers size={18} className="text-indigo-400" /></div>
-                    <span className="badge badge-brand">{s.audienceCount || 0} members</span>
+                <AnimatedListItem key={s._id} className="p-5 rounded-xl border bg-card hover:border-primary/50 transition-colors shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary"><Layers size={20} /></div>
+                    <Badge label={`${s.audienceCount || 0} members`} variant="brand" className="text-xs py-0.5" />
                   </div>
-                  <h4 className="font-semibold text-white">{s.name}</h4>
-                  <p className="text-slate-400 text-xs mt-1">{s.description || 'No description'}</p>
-                </div>
+                  <h4 className="font-bold text-foreground text-lg mb-1">{s.name}</h4>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{s.description || 'No description provided'}</p>
+                </AnimatedListItem>
               ))}
-            </div>
+            </AnimatedList>
           )}
           <Pagination pagination={segPagination} onChange={setPage} />
         </Card>
       )}
 
       {/* Create Campaign Modal */}
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create Campaign" size="lg">
-        <div className="space-y-4">
-          <div><label className="form-label">Campaign Name *</label><input type="text" className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
-          <div><label className="form-label">Target Segment *</label>
-            <select className="form-input" value={form.segmentId} onChange={e => setForm(f => ({ ...f, segmentId: e.target.value }))}>
-              <option value="">Select segment...</option>
-              {segments.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-            </select>
-          </div>
-          <div><label className="form-label">Channels</label>
-            <div className="flex gap-2 flex-wrap mt-1">
-              {['Email', 'SMS', 'Push', 'In-App'].map(ch => (
-                <button key={ch} type="button" onClick={() => toggleChannel(ch)}
-                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${form.channels.includes(ch) ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}>
-                  {ch}
-                </button>
-              ))}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Create Campaign</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Campaign Name *</Label>
+              <Input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Target Segment *</Label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={form.segmentId} onChange={e => setForm(f => ({ ...f, segmentId: e.target.value }))}>
+                <option value="">Select segment...</option>
+                {segments.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Channels</Label>
+              <div className="flex gap-2 flex-wrap pt-1">
+                {['Email', 'SMS', 'Push', 'In-App'].map(ch => (
+                  <button key={ch} type="button" onClick={() => toggleChannel(ch)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${form.channels.includes(ch) ? 'bg-primary border-primary text-primary-foreground shadow-sm' : 'bg-background border-input text-foreground hover:bg-muted'}`}>
+                    {ch}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Frequency</Label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}>
+                {['Once', 'Daily', 'Weekly', 'Monthly'].map(f => <option key={f}>{f}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Message Content</Label>
+              <textarea rows={4} className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
             </div>
           </div>
-          <div><label className="form-label">Frequency</label>
-            <select className="form-input" value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}>
-              {['Once', 'Daily', 'Weekly', 'Monthly'].map(f => <option key={f}>{f}</option>)}
-            </select>
-          </div>
-          <div><label className="form-label">Message</label><textarea rows={3} className="form-input resize-none" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} /></div>
-          <div className="flex gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCreate(false)} className="flex-1">Cancel</Button>
-            <Button loading={creating} onClick={createCampaign} className="flex-1">Create Campaign</Button>
-          </div>
-        </div>
-      </Modal>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button loading={creating} onClick={createCampaign}>Create Campaign</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Segment Modal */}
-      <Modal isOpen={showCreateSeg} onClose={() => setShowCreateSeg(false)} title="Create Segment">
-        <div className="space-y-4">
-          <div><label className="form-label">Segment Name *</label><input type="text" className="form-input" value={segForm.name} onChange={e => setSegForm(f => ({ ...f, name: e.target.value }))} /></div>
-          <div><label className="form-label">Description</label><textarea rows={3} className="form-input resize-none" value={segForm.description} onChange={e => setSegForm(f => ({ ...f, description: e.target.value }))} /></div>
-          <div className="flex gap-3">
-            <Button variant="ghost" onClick={() => setShowCreateSeg(false)} className="flex-1">Cancel</Button>
-            <Button onClick={createSegment} className="flex-1">Create Segment</Button>
+      <Dialog open={showCreateSeg} onOpenChange={setShowCreateSeg}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Segment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Segment Name *</Label>
+              <Input type="text" value={segForm.name} onChange={e => setSegForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <textarea rows={3} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none" value={segForm.description} onChange={e => setSegForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
           </div>
-        </div>
-      </Modal>
-    </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateSeg(false)}>Cancel</Button>
+            <Button onClick={createSegment}>Create Segment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AnimatedPage>
   );
 };
 
