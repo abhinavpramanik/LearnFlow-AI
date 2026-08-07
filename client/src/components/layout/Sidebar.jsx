@@ -78,6 +78,19 @@ const Sidebar = ({ collapsed, onToggle }) => {
       <div className="border-t border-border p-3 space-y-1 shrink-0">
         <Button 
           variant="ghost" 
+          className={cn("w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10", collapsed ? "px-0 justify-center" : "px-3")}
+          onClick={handleLogout}
+          title="Sign out"
+        >
+          {collapsed ? <LogOut size={18} /> : (
+            <>
+              <LogOut size={18} className="mr-2" />
+              <span>Sign out</span>
+            </>
+          )}
+        </Button>
+        <Button 
+          variant="ghost" 
           className={cn("w-full justify-start text-muted-foreground hover:text-foreground", collapsed ? "px-0 justify-center" : "px-3")}
           onClick={onToggle}
           title={collapsed ? 'Expand' : 'Collapse'}
