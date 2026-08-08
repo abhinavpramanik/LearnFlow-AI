@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { aiService } from '../../services';
+import { aiService, ticketService, profileService } from '../../services';
 import { Card, PageHeader, Button, Spinner, Badge, AIResultCard, EmptyState, Pagination, AnimatedPage, AnimatedList, AnimatedListItem } from '../../components/common';
 import { Brain, Zap, MessageSquare, Lightbulb, Eye, CheckCircle, XCircle, Edit3, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,7 +17,9 @@ const AI_FEATURES = [
 
 const AICenterPage = () => {
   const [active, setActive] = useState('intent');
-  const [input, setInput] = useState({ message: '', ticketId: '', profileId: '' });
+  const [input, setInput] = useState({ ticketId: '', profileId: '' });
+  const [tickets, setTickets] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
@@ -37,17 +39,53 @@ const AICenterPage = () => {
         setRuns(res.data.data || []);
       } catch {}
     };
+    const loadDropdownData = async () => {
+      try {
+        const [ticketsRes, profilesRes] = await Promise.all([
+          ticketService.getTickets({ limit: 20 }),
+          profileService.getProfiles({ limit: 20 })
+        ]);
+        const fetchedTickets = ticketsRes.data?.data || [];
+        const fetchedProfiles = profilesRes.data?.data || [];
+        setTickets(fetchedTickets);
+        setProfiles(fetchedProfiles);
+        
+        setInput({ 
+          ticketId: fetchedTickets.length > 0 ? fetchedTickets[0]._id : '',
+          profileId: fetchedProfiles.length > 0 ? fetchedProfiles[0]._id : ''
+        });
+      } catch (err) {
+        console.error("Failed to fetch dropdown data", err);
+      }
+    };
     loadRecs();
     loadRuns();
+    loadDropdownData();
   }, []);
 
   const run = async () => {
+    if (!input.ticketId && ['intent', 'sentiment', 'summarize', 'draft'].includes(active)) {
+      toast.error("Please select a ticket first");
+      return;
+    }
+    if (!input.profileId && active === 'recommend') {
+      toast.error("Please select a profile first");
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     try {
       let res;
-      if (active === 'intent') res = await aiService.classifyIntent({ message: input.message });
-      else if (active === 'sentiment') res = await aiService.analyzeSentiment({ message: input.message });
+      if (active === 'intent' || active === 'sentiment') {
+        const msgRes = await ticketService.getMessages(input.ticketId);
+        const messages = msgRes.data.data || [];
+        const latestMsg = messages.slice(-1)[0];
+        const messageText = latestMsg ? latestMsg.message : "Hello";
+        
+        if (active === 'intent') res = await aiService.classifyIntent({ message: messageText });
+        else res = await aiService.analyzeSentiment({ message: messageText });
+      }
       else if (active === 'summarize') res = await aiService.summarize(input.ticketId);
       else if (active === 'recommend') res = await aiService.nextBestAction(input.profileId);
       else if (active === 'draft') res = await aiService.draftReply(input.ticketId);
@@ -110,26 +148,36 @@ const AICenterPage = () => {
                   <h3 className="font-bold text-foreground">{activeFeature?.label}</h3>
                   <p className="text-xs text-muted-foreground">Configure and run</p>
                 </div>
-                <Badge label="Gemini 1.5 Flash" variant="purple" className="ml-auto" />
+                <Badge label="Gemini 3.5 Flash" variant="purple" className="ml-auto" />
               </div>
               
               <div className="space-y-5">
-                {['intent', 'sentiment'].includes(active) && (
+                {['intent', 'sentiment', 'summarize', 'draft'].includes(active) && (
                   <div className="space-y-2">
-                    <Label>Customer Message</Label>
-                    <textarea rows={4} placeholder="Enter the customer message to analyze..." value={input.message} onChange={e => setInput(i => ({ ...i, message: e.target.value }))} className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none" />
-                  </div>
-                )}
-                {['summarize', 'draft'].includes(active) && (
-                  <div className="space-y-2">
-                    <Label>Ticket ID</Label>
-                    <Input type="text" placeholder="Enter ticket MongoDB ID..." value={input.ticketId} onChange={e => setInput(i => ({ ...i, ticketId: e.target.value }))} />
+                    <Label>Select Ticket</Label>
+                    <select 
+                      value={input.ticketId} 
+                      onChange={e => setInput(i => ({ ...i, ticketId: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {tickets.length === 0 ? <option value="">No tickets found</option> : tickets.map(t => (
+                        <option key={t._id} value={t._id}>{t.title} ({t.status})</option>
+                      ))}
+                    </select>
                   </div>
                 )}
                 {active === 'recommend' && (
                   <div className="space-y-2">
-                    <Label>Profile ID</Label>
-                    <Input type="text" placeholder="Enter profile MongoDB ID..." value={input.profileId} onChange={e => setInput(i => ({ ...i, profileId: e.target.value }))} />
+                    <Label>Select Profile</Label>
+                    <select 
+                      value={input.profileId} 
+                      onChange={e => setInput(i => ({ ...i, profileId: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {profiles.length === 0 ? <option value="">No profiles found</option> : profiles.map(p => (
+                        <option key={p._id} value={p._id}>{p.userId?.firstName} {p.userId?.lastName} - {p.designation}</option>
+                      ))}
+                    </select>
                   </div>
                 )}
                 

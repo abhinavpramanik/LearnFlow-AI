@@ -20,7 +20,7 @@ const executeAI = async ({ feature, promptFn, inputData, actorId }) => {
   let parsed;
   let latencyMs = 0;
   let promptVersion = '1.0';
-  let modelVersion = 'gemini-1.5-flash';
+  let modelVersion = 'gemini-3.5-flash';
   let systemPrompt = '';
   let errorMessage;
 
