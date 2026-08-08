@@ -71,25 +71,25 @@ const DashboardPage = () => {
     </div>
   );
 
-  const ticketData = data.tickets?.data?.data || [];
-  const campaignData = data.campaigns?.data?.data || [];
-  const notifData = data.notifications?.data?.data?.notifications || [];
+  const ticketData = data.tickets?.data || [];
+  const campaignData = data.campaigns?.data || [];
+  const notifData = data.notifications?.data?.notifications || [];
   
   const ticketStats = data.ticketStats?.statusBreakdown || [];
   const campaignStats = data.campaignStats?.statusBreakdown || [];
 
-  const totalTickets = data.tickets?.data?.pagination?.total || 0;
+  const totalTickets = data.tickets?.pagination?.total || 0;
   const openTicketsCount = ticketStats.find(s => s._id === 'Open')?.count || 0;
   const inProgressTicketsCount = ticketStats.find(s => s._id === 'In Progress')?.count || 0;
   const closedTicketsCount = ticketStats.find(s => s._id === 'Closed')?.count || 0;
   
-  const totalCampaigns = data.campaigns?.data?.pagination?.total || 0;
+  const totalCampaigns = data.campaigns?.pagination?.total || 0;
   const activeCampaignsCount = campaignStats.find(s => s._id === 'Running')?.count || 0;
 
-  const totalUsers = data.users?.data?.pagination?.total || 0;
-  const totalAiRuns = data.aiRuns?.data?.pagination?.total || 0;
-  const totalJourneys = data.journeys?.data?.pagination?.total || 0;
-  const unreadNotifsCount = data.unreadNotifs?.data?.pagination?.total || notifData.filter(n => !n.read).length;
+  const totalUsers = data.users?.pagination?.total || 0;
+  const totalAiRuns = data.aiRuns?.pagination?.total || 0;
+  const totalJourneys = data.journeys?.pagination?.total || 0;
+  const unreadNotifsCount = data.unreadNotifs?.pagination?.total || data.notifications?.data?.unreadCount || 0;
 
   const ticketChartData = [
     { name: 'Open', value: openTicketsCount, color: '#ef4444' },

@@ -1,6 +1,7 @@
 const Ticket = require('../models/Ticket');
 const Message = require('../models/Message');
 const Notification = require('../models/Notification');
+const Profile = require('../models/Profile');
 const { auditLog } = require('./auditService');
 const { NotFoundError, AuthorizationError, BusinessRuleError } = require('../utils/errors');
 const { ROLES, TICKET_STATUS, NOTIFICATION_SEVERITY } = require('../constants');
@@ -53,7 +54,15 @@ const getTicketMessages = async (ticketId) => {
 };
 
 const createTicket = async (data, actorId, ipAddress) => {
-  const ticket = await Ticket.create({ ...data, createdBy: actorId, status: TICKET_STATUS.OPEN });
+  const profile = await Profile.findOne({ userId: actorId });
+  if (!profile) throw new BusinessRuleError('User profile not found. Cannot create ticket.');
+
+  const ticket = await Ticket.create({ 
+    ...data, 
+    createdBy: actorId, 
+    profileId: profile._id,
+    status: TICKET_STATUS.OPEN 
+  });
   await auditLog({ actor: actorId, action: 'tickets:create', entity: 'Ticket', entityId: ticket._id, outcome: 'success', ipAddress });
   return ticket;
 };
