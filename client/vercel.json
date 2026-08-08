@@ -4,6 +4,7 @@
       "src": "/api/(.*)",
       "dest": "https://learnflow-ai-ywhi.onrender.com/api/$1"
     },
+    { "handle": "filesystem" },
     {
       "src": "/(.*)",
       "dest": "/index.html"
