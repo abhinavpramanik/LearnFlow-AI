@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://learnflow-ai-server.onrender.com/api/$1"
+      "dest": "https://learnflow-ai-ywhi.onrender.com/api/$1"
     },
     {
       "src": "/(.*)",
